@@ -1,5 +1,9 @@
 # AI-SDLC
 
+[![CI](https://github.com/SimonL777/ai-sdlc/actions/workflows/ci.yml/badge.svg)](https://github.com/SimonL777/ai-sdlc/actions/workflows/ci.yml)
+
+[sandbox-gateway](https://github.com/SimonL777/sandbox-gateway) · [model-gateway](https://github.com/SimonL777/model-gateway) · [automation-platform](https://github.com/SimonL777/automation-platform) · [ai-sdlc](https://github.com/SimonL777/ai-sdlc)
+
 A small React workbench that connects three independent Java services into a demonstrable delivery loop.
 
 ```text
@@ -19,7 +23,7 @@ Keep these as siblings for the integration example:
 - `automation-platform`: durable runs, Git snapshots, Workflow compiler and test delivery.
 - `ai-sdlc`: user interface, Supabase Workspace RPC with optional Edge transport and integration deployment.
 
-Repository names describe the intended split; no GitHub publication or running deployment is implied by this README.
+Each repository has its own build, API/configuration and migration lifecycle. The integrated deployment keeps them as siblings.
 
 ## Current implementation
 
@@ -30,7 +34,20 @@ Repository names describe the intended split; no GitHub publication or running d
 - Independent project configuration supports four Supabase resources or an explicit two-project NAS demo. Schemas and buckets stay service-owned; AI-SDLC Auth provides a common verified identity. Its Workspace Edge API stores immutable material snapshots. Shared demo resources are logical separation, not four physical security boundaries.
 - A four-service Docker Compose example plus an on-demand Playwright Runner image.
 
-Validated on 2026-09-18: frontend tests (4), deployment configuration tests (11), production build, browser login-page rendering, real Supabase Workspace/Auth/Storage, and the authenticated Docker execution/report chain. Model generation is explicitly mock. Public GitHub release and real-provider validation remain pending.
+Validated on 2026-09-18: frontend tests (4), deployment configuration tests (11), production build, browser login-page rendering, real Supabase Workspace/Auth/Storage, and the authenticated Docker execution/report chain. Model generation is explicitly mock. Real-provider validation remains pending.
+
+## Get the complete demo
+
+```bash
+mkdir ai-sdlc-demo && cd ai-sdlc-demo
+git clone https://github.com/SimonL777/sandbox-gateway.git
+git clone https://github.com/SimonL777/model-gateway.git
+git clone https://github.com/SimonL777/automation-platform.git
+git clone https://github.com/SimonL777/ai-sdlc.git
+cd ai-sdlc/examples/stack
+```
+
+Continue with [the deployment guide](examples/stack/README.md). For the validated two-resource demo, use `setup_env.py --layout two-project-demo`; each repository also supports independent Supabase resources. Never copy private credentials into source files.
 
 ## Development
 
@@ -68,7 +85,7 @@ npm test
 npm run build
 ```
 
-NAS acceptance scripts (run in the later debugging phase):
+NAS acceptance scripts:
 
 ```bash
 cd examples/stack
