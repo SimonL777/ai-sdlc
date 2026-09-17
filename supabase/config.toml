@@ -1,0 +1,3 @@
+project_id = "ai-sdlc"
+[functions.ai-sdlc-workspaces]
+verify_jwt = false
