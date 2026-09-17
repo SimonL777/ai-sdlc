@@ -1,0 +1,21 @@
+# docker compose -f compose.yml -f compose.nas.yml ...
+# Conservative, single-browser demo on an already-busy NAS; measure real usage.
+services:
+  sandbox-gateway:
+    build:
+      dockerfile: Dockerfile.runtime
+    mem_limit: 448m
+    environment:
+      SANDBOX_MEMORY_MB: 512
+  model-gateway:
+    build:
+      dockerfile: Dockerfile.runtime
+    mem_limit: 448m
+  automation-platform:
+    build:
+      dockerfile: Dockerfile.runtime
+    mem_limit: 448m
+  ai-sdlc:
+    build:
+      dockerfile: Dockerfile.runtime
+    mem_limit: 96m

@@ -1,16 +1,9 @@
 name: ai-sdlc
 x-java-environment: &java-env
   API_TOKEN: ${API_TOKEN:?Run setup_env.py first}
-  DATABASE_URL: ${DATABASE_URL:-}
-  DATABASE_USER: ${DATABASE_USER:-}
-  DATABASE_PASSWORD: ${DATABASE_PASSWORD:-}
-  SUPABASE_URL: ${SUPABASE_URL:-}
-  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-  SUPABASE_JWT_ISSUER: ${SUPABASE_JWT_ISSUER:-}
-  SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+  SUPABASE_JWT_ISSUER: ${AI_SDLC_JWT_ISSUER:-}
+  SUPABASE_JWKS_URL: ${AI_SDLC_JWKS_URL:-}
   SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
-  ARTIFACT_MODE: ${ARTIFACT_MODE:-supabase}
-  ARTIFACT_DIR: /app/data/artifacts
 services:
   sandbox-gateway:
     build: ../../../sandbox-gateway
@@ -19,6 +12,13 @@ services:
     environment:
       <<: *java-env
       PORT: 8081
+      DATABASE_URL: ${SANDBOX_DATABASE_URL:-}
+      DATABASE_USER: ${SANDBOX_DATABASE_USER:-}
+      DATABASE_PASSWORD: ${SANDBOX_DATABASE_PASSWORD:-}
+      SUPABASE_URL: ${SANDBOX_SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SANDBOX_SUPABASE_SERVICE_ROLE_KEY:-}
+      ARTIFACT_MODE: ${ARTIFACT_MODE:-supabase}
+      ARTIFACT_DIR: /app/data/artifacts
       DB_SCHEMA: sandbox_gateway
       SERVICE_TOKEN: ${SANDBOX_SERVICE_TOKEN:?Run setup_env.py first}
       STORAGE_BUCKET: sandbox-gateway-artifacts
@@ -41,9 +41,11 @@ services:
     environment:
       <<: *java-env
       PORT: 8082
+      DATABASE_URL: ${MODEL_DATABASE_URL:-}
+      DATABASE_USER: ${MODEL_DATABASE_USER:-}
+      DATABASE_PASSWORD: ${MODEL_DATABASE_PASSWORD:-}
       DB_SCHEMA: model_gateway
       SERVICE_TOKEN: ${MODEL_SERVICE_TOKEN:?Run setup_env.py first}
-      STORAGE_BUCKET: model-gateway-artifacts
       MODEL_MODE: ${MODEL_MODE:-mock}
       MODEL_BASE_URL: ${MODEL_BASE_URL:-}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
@@ -63,6 +65,13 @@ services:
     environment:
       <<: *java-env
       PORT: 8083
+      DATABASE_URL: ${AUTOMATION_DATABASE_URL:-}
+      DATABASE_USER: ${AUTOMATION_DATABASE_USER:-}
+      DATABASE_PASSWORD: ${AUTOMATION_DATABASE_PASSWORD:-}
+      SUPABASE_URL: ${AUTOMATION_SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${AUTOMATION_SUPABASE_SERVICE_ROLE_KEY:-}
+      ARTIFACT_MODE: ${ARTIFACT_MODE:-supabase}
+      ARTIFACT_DIR: /app/data/artifacts
       DB_SCHEMA: automation_platform
       SERVICE_TOKEN: ${AUTOMATION_SERVICE_TOKEN:?Run setup_env.py first}
       STORAGE_BUCKET: automation-platform-artifacts
@@ -87,8 +96,9 @@ services:
     image: ai-sdlc/workbench:0.1.0
     restart: unless-stopped
     environment:
-      PUBLIC_SUPABASE_URL: ${SUPABASE_URL:-}
-      PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      PUBLIC_SUPABASE_URL: ${AI_SDLC_SUPABASE_URL:-}
+      PUBLIC_SUPABASE_ANON_KEY: ${AI_SDLC_SUPABASE_ANON_KEY:-}
+      PUBLIC_WORKSPACE_TRANSPORT: ${AI_SDLC_WORKSPACE_TRANSPORT:-rpc}
     ports: ["${BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8098}:8080"]
     depends_on:
       automation-platform: {condition: service_healthy}

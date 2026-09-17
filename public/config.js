@@ -1,1 +1,1 @@
-window.APP_CONFIG = {supabaseUrl:"",supabaseAnonKey:""};
+window.APP_CONFIG = {supabaseUrl:"",supabaseAnonKey:"",workspaceTransport:"rpc"};

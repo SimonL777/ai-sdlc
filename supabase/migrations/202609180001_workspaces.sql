@@ -14,7 +14,3 @@ REVOKE INSERT, UPDATE, DELETE ON public.sdlc_workspaces FROM anon, authenticated
 GRANT SELECT ON public.sdlc_workspaces TO authenticated;
 GRANT UPDATE(automation_run_id) ON public.sdlc_workspaces TO authenticated;
 CREATE INDEX IF NOT EXISTS sdlc_workspaces_owner ON public.sdlc_workspaces(owner_id,created_at DESC);
-INSERT INTO storage.buckets(id,name,public) VALUES
- ('sandbox-gateway-artifacts','sandbox-gateway-artifacts',false),
- ('automation-platform-artifacts','automation-platform-artifacts',false)
-ON CONFLICT(id) DO NOTHING;

@@ -1,6 +1,6 @@
 # Four-repository NAS deployment
 
-Implementation is at the code-written stage. Runtime validation is intentionally deferred; do not interpret this document as proof of a deployed stack.
+The two-project layout has been deployed and exercised on a Linux Docker host. Positive, deliberate failure, authenticated Workspace linkage, private Storage download and cleanup checks passed. Model generation remains mock; real-provider acceptance is separate. See the repository validation status for the exact scope.
 
 ## Layout
 
@@ -16,17 +16,33 @@ workspace/
 
 Requirements: a Linux Docker host/NAS with Docker Compose v2, Python 3 for setup/smoke scripts, outbound access to image/package registries and Supabase, and enough available RAM for three JVMs plus one browser container (start with roughly 3 GiB available, then measure).
 
-## Supabase setup
+## Independent projects and two-project NAS demo
 
-Use a dedicated development Supabase project. Do not point first-run migrations at existing business projects.
+Every repository keeps its own database configuration and migrations. The default `SUPABASE_LAYOUT=independent` supports four separate Supabase projects. The NAS demo may explicitly select `two-project-demo` when only two cloud projects are available:
 
-1. Apply `ai-sdlc/supabase/migrations/202609180001_workspaces.sql` through your normal Supabase SQL workflow. It creates the user-owned workspace table and two private artifact buckets.
-2. Each Java service applies Flyway migrations to its own schema: `sandbox_gateway`, `model_gateway`, `automation_platform`. Configure a database role with the needed schema/migration permissions. The deployment sample uses one operator-managed database connection for simplicity; production can split roles. JDBC does not automatically impersonate `auth.uid()`.
-3. Use a TLS PostgreSQL JDBC endpoint appropriate to your NAS network. Supabase direct connection or a suitable session pooler is preferable for the small persistent Java pools. Verify IPv4/IPv6 reachability. If you choose transaction pooling, check prepared-statement compatibility before use.
-4. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in private `.env`; the service-role key remains in Java containers, never browser config.
-5. Optional Supabase user login: deploy `ai-sdlc-workspaces` Edge Function, set `PUBLIC` frontend settings via `.env`'s `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and configure `SUPABASE_JWT_ISSUER` and `SUPABASE_JWKS_URL` for an asymmetric-signing Supabase project. The Edge Function verifies the user through Auth and uses the user's JWT for RLS. Legacy HS256 projects need a compatible authentication adapter; do not disable Java verification.
+| Project | Data and migrations | Private configuration |
+|---|---|---|
+| Sandbox Gateway | Flyway execution schema; `sandbox-gateway/supabase/migrations/202609180001_artifact_bucket.sql` creates its private bucket | `SANDBOX_DATABASE_*`, `SANDBOX_SUPABASE_URL`, `SANDBOX_SUPABASE_SERVICE_ROLE_KEY` |
+| Model Gateway | Flyway request/audit schema; no artifact bucket or service-role key needed | `MODEL_DATABASE_*`, `MODEL_SUPABASE_URL` (deployment identity) |
+| Automation Platform | Flyway workflow/run schema; `automation-platform/supabase/migrations/202609180001_artifact_bucket.sql` creates its private bucket | `AUTOMATION_DATABASE_*`, `AUTOMATION_SUPABASE_URL`, `AUTOMATION_SUPABASE_SERVICE_ROLE_KEY` |
+| AI-SDLC | Apply both Workspace SQL migrations in filename order; default RPC is ready after SQL. Edge transport is optional | `AI_SDLC_SUPABASE_URL`, `AI_SDLC_SUPABASE_ANON_KEY`; its service-role key stays in its own Edge environment |
 
-Operator-token mode can run the full material → workflow → Docker → report path without Edge deployment. In that mode material is persisted in the automation service's database task; the optional separate Workspace table is used only with Supabase user login. This is an explicit mode distinction.
+### Two-project demo mapping
+
+- **Project A / infrastructure**: Sandbox Gateway (`sandbox_gateway` schema + its private bucket) and Model Gateway (`model_gateway` schema, no Storage key).
+- **Project B / applications**: Automation Platform (`automation_platform` schema + its bucket) and AI-SDLC (`public.sdlc_workspaces`, Auth and its Edge Function).
+
+Use `python3 setup_env.py --layout two-project-demo` for a new private configuration. Keep all four variable groups: repeat project A's endpoints for Sandbox/Model and project B's endpoints for Automation/AI-SDLC. Each repository still runs and migrates independently. Moving to four resources later only changes connection settings and requires a deliberate data migration; no source coupling is introduced.
+
+Schemas and buckets provide logical organization in this demo. A shared database administrator or Supabase service-role key can have access across its physical project; this is not four independent privilege boundaries. Use separate database roles with scoped grants for stronger isolation if needed. Privileged keys are never put in the browser or shared between projects A and B.
+
+Apply each service's Supabase SQL **only to its own project**. Java Flyway migrations run against that service's configured JDBC database. Use TLS and an appropriate direct/session-pooler endpoint reachable from the NAS. Database credentials are distinct from API/service-role keys. If choosing transaction pooling, check JDBC prepared-statement compatibility first.
+
+The Compose file maps each prefix into the corresponding container's ordinary `DATABASE_URL` / `SUPABASE_URL` environment variables. No Java service receives another project's service-role key. The checker enforces four distinct resources in independent mode, or the explicit A/B grouping in two-project demo mode. Cross-group connection and service-role-key reuse is rejected.
+
+**Identity can remain unified while data is isolated.** Optional user login is provided by the AI-SDLC project's Auth. Set `AI_SDLC_JWT_ISSUER` and `AI_SDLC_JWKS_URL` to that project's asymmetric JWT configuration; all Java APIs verify this issuer and enforce owner scope, while each service still reads/writes only its own database. Users do not need four separate accounts. Internal service tokens are distinct by receiver and can forward a verified owner ID. No JWT decoding or shared owner header bypasses authentication.
+
+Operator-token mode runs the infrastructure path without Edge deployment. Its input material is persisted in the automation project's database. The separate AI-SDLC Workspace table is exercised only by the Supabase account-login path; verify that path separately before claiming all four cloud projects are integrated.
 
 ## Configure and start
 
@@ -46,7 +62,7 @@ The web listener defaults to `127.0.0.1:8098`. For a private LAN demo set `BIND_
 
 To enable Git snapshots, set an operator-owned allowlist such as `GIT_REPOSITORIES_JSON={"sample":"https://github.com/OWNER/PUBLIC_REPOSITORY.git"}`. Requests may choose a registered key and safe ref; they cannot supply arbitrary repository URLs, credentials or shell commands.
 
-## Runtime acceptance — run only when ready to debug
+## Runtime acceptance
 
 ```bash
 python3 smoke.py
@@ -70,3 +86,15 @@ Positive smoke checks durable run status, idempotent replay, a real Docker/Playw
 - No K8s, Redis, Kafka, separate Data Pool or internal-company connectors are required.
 
 Stop services with `docker compose down`. Do not add `--volumes` unless intentionally deleting local development data. Supabase data is not deleted by Compose.
+
+## Low-memory NAS / prebuilt-artifact path
+
+Build each Java JAR with JDK 21/Maven and the workbench with `npm ci && npm run build` on the development machine. Transfer source plus `target/*-0.1.0.jar` and frontend `dist/` to the same sibling layout on the NAS. `Dockerfile.runtime` skips Maven/Node builds on the NAS. Then use:
+
+```bash
+docker compose -f compose.yml -f compose.nas.yml --parallel 1 build
+docker compose -f compose.yml -f compose.nas.yml --profile build build runner-image
+docker compose -f compose.yml -f compose.nas.yml up -d --wait
+```
+
+The override sets each Java container to 448 MiB, the workbench to 96 MiB, and the on-demand Runner to 512 MiB. JVM heap is bounded; execute one browser task at a time and observe the host's available memory/swap. These are demo limits, not a production capacity claim. Do not stop unrelated NAS applications to make room without a deliberate operator decision.

@@ -17,7 +17,7 @@ Keep these as siblings for the integration example:
 - `sandbox-gateway`: execution control and Docker resource lifecycle.
 - `model-gateway`: model requests, provider credentials, SSE and audit.
 - `automation-platform`: durable runs, Git snapshots, Workflow compiler and test delivery.
-- `ai-sdlc`: user interface, optional Supabase Workspace Edge API and integration deployment.
+- `ai-sdlc`: user interface, Supabase Workspace RPC with optional Edge transport and integration deployment.
 
 Repository names describe the intended split; no GitHub publication or running deployment is implied by this README.
 
@@ -27,10 +27,10 @@ Repository names describe the intended split; no GitHub publication or running d
 - Model mode is visible. Mock generation is not presented as a real LLM evaluation.
 - Private operator-token login and optional Supabase email login.
 - The browser calls Java APIs through the NAS's same-origin reverse proxy; no cloud Edge Function must reach a private NAS IP.
-- Supabase stores service data/artifacts; optional Workspace Edge API stores immutable material snapshots with owner-based access.
+- Independent project configuration supports four Supabase resources or an explicit two-project NAS demo. Schemas and buckets stay service-owned; AI-SDLC Auth provides a common verified identity. Its Workspace Edge API stores immutable material snapshots. Shared demo resources are logical separation, not four physical security boundaries.
 - A four-service Docker Compose example plus an on-demand Playwright Runner image.
 
-Source is written. Builds, tests, browser checks, Docker/NAS deployment and public release are **pending validation**. The requested implementation phase does not claim runtime acceptance.
+Validated on 2026-09-18: frontend tests (4), deployment configuration tests (11), production build, browser login-page rendering, real Supabase Workspace/Auth/Storage, and the authenticated Docker execution/report chain. Model generation is explicitly mock. Public GitHub release and real-provider validation remain pending.
 
 ## Development
 
@@ -51,13 +51,13 @@ See [examples/stack/README.md](examples/stack/README.md). This is the single int
 
 ## Supabase Workspace function
 
-Apply `supabase/migrations/202609180001_workspaces.sql`, then deploy:
+Apply both Workspace migrations in order: `202609180001_workspaces.sql` and `202609180002_workspace_rpc.sql`. The default `rpc` transport works through authenticated Supabase PostgREST and requires no management API token. To use the optional `edge` transport, deploy:
 
 ```bash
 supabase functions deploy ai-sdlc-workspaces --project-ref YOUR_PROJECT_REF --no-verify-jwt
 ```
 
-The function itself verifies the user with Supabase Auth. `--no-verify-jwt` does not make its application API anonymous. Material creation uses the server-side service role only after identity verification; user table grants cannot update the material. Run attachment uses the user's JWT and RLS. A run reference is metadata and never an authorization credential.
+Set `AI_SDLC_WORKSPACE_TRANSPORT=edge` only after deploying the optional function. The function itself verifies the user with Supabase Auth. `--no-verify-jwt` does not make its application API anonymous. Material creation uses the server-side service role only after identity verification; user table grants cannot update the material. Run attachment uses the user's JWT and RLS. A run reference is metadata and never an authorization credential.
 
 Operator mode persists the original requirement in the automation task. The separate Workspace table is used with Supabase account login; these modes are shown explicitly.
 
