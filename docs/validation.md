@@ -25,6 +25,10 @@ Verified: four-platform switch, API filter, case detail and deterministic compil
 
 Real-provider AI analysis, arbitrary hostile code isolation, full enterprise DD repository exploration, test-plan scheduling and broad external target coverage are not claimed. Provider/runtime settings are inspected in the console and configured by the deployment operator.
 
-## Deployment delta
+## Final deployment confirmation — 2026-09-18
 
-The product UI, Web/API runtime, case/review capabilities and sample runs above were deployed and verified. A subsequent bounded Storage network retry patch passed local tests but its final deployment was interrupted when SSH became unavailable. Runtime images continued serving the accepted v0.2 functionality. Treat this small reliability patch as source-verified until a fresh deployment is recorded.
+The Storage retry patch and final console/provenance updates have now been deployed. The running Sandbox/Automation JAR SHA-256 values and every frontend asset hash match the local release builds. No final reliability patch remains pending.
+
+Fresh acceptance on the Docker host passed for a Web scenario, an API scenario, and a deliberately failing Web assertion. Report and screenshot reads from Supabase, deterministic Spec hashes, idempotent submission, and container cleanup were verified. Studio Markdown generation and object readback passed in explicit mock mode. All four UI routes returned HTTP 200.
+
+This supersedes the earlier interrupted-transfer deployment delta. Real-provider AI evaluation is still separate from the validated mock capability flow.
