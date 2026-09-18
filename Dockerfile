@@ -4,7 +4,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
-FROM nginx:1.27-alpine
+FROM nginx:alpine
 RUN apk add --no-cache jq
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf

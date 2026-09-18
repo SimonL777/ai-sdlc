@@ -7,7 +7,7 @@ x-java-environment: &java-env
 services:
   sandbox-gateway:
     build: ../../../sandbox-gateway
-    image: ai-sdlc/sandbox-gateway:0.1.0
+    image: ai-sdlc/sandbox-gateway:0.2.0
     restart: unless-stopped
     environment:
       <<: *java-env
@@ -22,7 +22,7 @@ services:
       DB_SCHEMA: sandbox_gateway
       SERVICE_TOKEN: ${SANDBOX_SERVICE_TOKEN:?Run setup_env.py first}
       STORAGE_BUCKET: sandbox-gateway-artifacts
-      SANDBOX_IMAGE: ai-sdlc-runner:0.1.0
+      SANDBOX_IMAGE: ai-sdlc-runner:0.2.0
     group_add: ["${DOCKER_GID:?Set Docker socket group ID}"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -36,7 +36,7 @@ services:
       start_period: 40s
   model-gateway:
     build: ../../../model-gateway
-    image: ai-sdlc/model-gateway:0.1.0
+    image: ai-sdlc/model-gateway:0.2.0
     restart: unless-stopped
     environment:
       <<: *java-env
@@ -60,7 +60,7 @@ services:
       start_period: 40s
   automation-platform:
     build: ../../../automation-platform
-    image: ai-sdlc/automation-platform:0.1.0
+    image: ai-sdlc/automation-platform:0.2.0
     restart: unless-stopped
     environment:
       <<: *java-env
@@ -93,7 +93,7 @@ services:
       start_period: 40s
   ai-sdlc:
     build: ../..
-    image: ai-sdlc/workbench:0.1.0
+    image: ai-sdlc/workbench:0.2.0
     restart: unless-stopped
     environment:
       PUBLIC_SUPABASE_URL: ${AI_SDLC_SUPABASE_URL:-}
@@ -102,10 +102,37 @@ services:
     ports: ["${BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8098}:8080"]
     depends_on:
       automation-platform: {condition: service_healthy}
+      automation-console: {condition: service_started}
+      model-console: {condition: service_started}
+      sandbox-console: {condition: service_started}
     mem_limit: 128m
+  automation-console:
+    build: ../../../automation-platform/frontend
+    image: ai-sdlc/automation-console:0.2.0
+    restart: unless-stopped
+    environment:
+      PUBLIC_SUPABASE_URL: ${AI_SDLC_SUPABASE_URL:-}
+      PUBLIC_SUPABASE_ANON_KEY: ${AI_SDLC_SUPABASE_ANON_KEY:-}
+    mem_limit: 48m
+  model-console:
+    build: ../../../model-gateway/frontend
+    image: ai-sdlc/model-console:0.2.0
+    restart: unless-stopped
+    environment:
+      PUBLIC_SUPABASE_URL: ${AI_SDLC_SUPABASE_URL:-}
+      PUBLIC_SUPABASE_ANON_KEY: ${AI_SDLC_SUPABASE_ANON_KEY:-}
+    mem_limit: 48m
+  sandbox-console:
+    build: ../../../sandbox-gateway/frontend
+    image: ai-sdlc/sandbox-console:0.2.0
+    restart: unless-stopped
+    environment:
+      PUBLIC_SUPABASE_URL: ${AI_SDLC_SUPABASE_URL:-}
+      PUBLIC_SUPABASE_ANON_KEY: ${AI_SDLC_SUPABASE_ANON_KEY:-}
+    mem_limit: 48m
   runner-image:
     build: ../../../automation-platform/runner
-    image: ai-sdlc-runner:0.1.0
+    image: ai-sdlc-runner:0.2.0
     profiles: [build]
     entrypoint: [node, -e, "process.exit(0)"]
 volumes:

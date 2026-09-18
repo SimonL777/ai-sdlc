@@ -19,3 +19,12 @@ services:
     build:
       dockerfile: Dockerfile.runtime
     mem_limit: 96m
+  automation-console:
+    build:
+      dockerfile: Dockerfile.runtime
+  model-console:
+    build:
+      dockerfile: Dockerfile.runtime
+  sandbox-console:
+    build:
+      dockerfile: Dockerfile.runtime

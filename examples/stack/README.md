@@ -98,3 +98,13 @@ docker compose -f compose.yml -f compose.nas.yml up -d --wait
 ```
 
 The override sets each Java container to 448 MiB, the workbench to 96 MiB, and the on-demand Runner to 512 MiB. JVM heap is bounded; execute one browser task at a time and observe the host's available memory/swap. These are demo limits, not a production capacity claim. Do not stop unrelated NAS applications to make room without a deliberate operator decision.
+
+## v0.2 product consoles
+
+The same ingress serves four separately built frontends: `/` (AI-SDLC), `/automation/`, `/models/`, `/sandbox/`. Platform switching reuses the same browser session. Each Java repository owns its `frontend/` project and UI Dockerfiles.
+
+Apply the additive Flyway migrations by starting the new service images. These add case revisions and the artifact catalogue, preserving prior jobs. AI-SDLC capabilities are logical Studio tasks executed by the existing Java worker; no fourth JVM or cloud-to-NAS callback is required.
+
+Initialize sample cases with the **载入演示用例** button or `WORKSPACE_TOKEN=... python3 seed-demo.py`. Add `--run` to create real execution records. Seeded input is labeled, and successful/failed runs are never fabricated.
+
+Web tests emit private screenshots; API tests record status, path and bounded response bodies. Every output uses the existing Supabase Storage configuration. No extra S3 credentials or service is needed.
